@@ -2,73 +2,71 @@
 
 // Deploy MsigTxnShare
 // Args:
-//  + Number of Accounts
-//  + Threshold
-//  + Version
+//  + uint8: Msig Signer Major Version
+//  + uint8: Msig Signer Minor Version
 // Returns:
-//  + Application ID
-method "deploy(uint8,uint8,uint8)uint64"
+//  + uint64: Application ID
+method "deploy(uint8,uint8)uint64"
 txna ApplicationArgs 0
 ==
 bnz method_deploy
 
-// Add Signature
+// Set Signatures
+// Signatures can only be added by the account holder.
 // Args:
-//  + Account of signature
-//  + Signature for transaction
-// Returns:
-//  + Number of signatures
-method "addSignature(account,byte[])uint8"
+//  + byte[][]: bytearray of bytearray containing 1 to 16 signatures
+method "setSignatures(byte[][])void"
 txna ApplicationArgs 0
 ==
-bnz method_add_signature
+bnz method_set_signatures
 
-// Remove Signature
-// Args:
-//  + Account
-// Returns:
-//  + Number of signatures
-method "removeSignature(account)uint8"
+// Clear Signatures
+method "clearSignatures()void"
 txna ApplicationArgs 0
 ==
-bnz method_remove_signature
+bnz method_clear_signatures
 
+// Add Account
 // Args:
-//  + Multisig account index
-//  + Account to add
-// Returns:
-//  + Number of accounts
-method "addAccount(uint8,account)uint8"
+//  + uint8: Multisig account index
+//  + account: Account to add
+method "addAccount(uint8,account)void"
 txna ApplicationArgs 0
 ==
 bnz method_add_account
 
+// Remove Account
 // Args:
-//  + Multisig account index
-//  + Account to remove
-// Return:
-//  + Number of accounts
-method "removeAccount(uint8,account)uint8"
+//  + account: Account to remove
+method "removeAccount(account)void"
 txna ApplicationArgs 0
 ==
 bnz method_remove_account
 
 // Add Transaction
 // Args:
-//  + Group index
-//  + Transaction bytes
-method "addTransaction(uint8,byte[])uint8"
+//  + uint8: Group transaction index
+//  + byte[]: Transaction bytes
+method "addTransaction(uint8,byte[])void"
 txna ApplicationArgs 0
 ==
 bnz method_add_transaction
 
 // Remove Transaction
 // Args:
-//  + Group index
-method "removeTransaction(uint8)uint8"
+//  + uint8: Group transaction index
+method "removeTransaction(uint8)void"
 txna ApplicationArgs 0
 ==
 bnz method_remove_transaction
+
+// Set Threshold
+// Args:
+//  + New threshold
+method "setThreshold(uint8)void"
+txna ApplicationArgs 0
+==
+bnz method_set_threshold
 
 // Destroy
 method "destroy()void"
@@ -77,7 +75,7 @@ txna ApplicationArgs 0
 bnz method_destroy
 
 // Update
-method "update()void"
+method "update(uint8,uint8)void"
 txna ApplicationArgs 0
 ==
 bnz method_update
@@ -94,32 +92,21 @@ method_deploy:
   !
   assert
 
-  // Set number of transactions to zero
-  byte "NumTransactions"
-  int 0
-  app_global_put
-
-  // Store number of accounts
-  byte "NumAccounts"
+  // Store Msig Signer Major Version
+  byte "VersionMajor"
   txna ApplicationArgs 1
   btoi
   app_global_put
 
-  // Set number of signatures to zero
-  byte "NumSignatures"
-  int 0
-  app_global_put
-
-  // Store threshold
-  byte "Threshold"
+  // Store Msig Signer Minor Version
+  byte "VersionMinor"
   txna ApplicationArgs 2
   btoi
   app_global_put
 
-  // Store version
-  byte "Version"
-  txna ApplicationArgs 3
-  btoi
+  // Set threshold to 1 (default)
+  byte "Threshold"
+  int 1
   app_global_put
 
   // Return Application ID
@@ -162,6 +149,41 @@ method_update:
   global CreatorAddress
   ==
   assert
+
+  // Store Msig Signer Major Version
+  byte "VersionMajor"
+  txna ApplicationArgs 1
+  btoi
+  app_global_put
+
+  // Store Msig Signer Minor Version
+  byte "VersionMinor"
+  txna ApplicationArgs 2
+  btoi
+  app_global_put
+
+  int 1
+  return
+
+method_set_threshold:
+  txn OnCompletion
+  int NoOp
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  // Set threshold
+  byte "Threshold"
+  txna ApplicationArgs 1
+  btoi
+  app_global_put
 
   int 1
   return
@@ -209,24 +231,6 @@ method_add_transaction:
   substring3                // txn0 txndata
   box_put                   //
 
-  // Increment NumTransactions
-  byte "NumTransactions"
-  dup
-  app_global_get
-  int 1
-  +
-  dup
-  cover 2
-  app_global_put
-
-  // Return NumTransactions
-  byte 0x151f7c75
-  swap
-  itob
-  substring 7 8
-  concat
-  log
-
   int 1
   return
 
@@ -250,24 +254,6 @@ method_remove_transaction:
   box_del
   pop
 
-  // Decrement NumTransactions
-  byte "NumTransactions"
-  dup
-  app_global_get
-  int 1
-  -
-  dup
-  cover 2
-  app_global_put
-
-  // Return NumTransactions
-  byte 0x151f7c75
-  swap
-  itob
-  substring 7 8
-  concat
-  log
-
   int 1
   return
 
@@ -285,37 +271,13 @@ method_add_account:
   ==
   assert
 
-  // Store account in multisig index
+  // Store account key with multisig index value
+  txna ApplicationArgs 2
+  btoi
+  txnas Accounts
   txna ApplicationArgs 1
-  txna ApplicationArgs 2
   btoi
-  txnas Accounts
   app_global_put
-
-  // Store account as key in global state
-  txna ApplicationArgs 2
-  btoi
-  txnas Accounts
-  byte ""
-  app_global_put
-
-  // Increment NumAccounts
-  byte "NumAccounts"
-  dup
-  app_global_get
-  int 1
-  +
-  dup
-  cover 2
-  app_global_put
-
-  // Return NumAccounts
-  byte 0x151f7c75
-  swap
-  itob
-  substring 7 8
-  concat
-  log
 
   int 1
   return
@@ -334,81 +296,101 @@ method_remove_account:
   ==
   assert
 
-  // Remove account from multisig index
+  // Delete account and multisig index
   txna ApplicationArgs 1
-  app_global_del
-
-  // Delete account key from global state
-  txna ApplicationArgs 2
   btoi
   txnas Accounts
   app_global_del
 
-  // Decrement NumAccounts
-  byte "NumAccounts"
-  dup
-  app_global_get
-  int 1
-  -
-  dup
-  cover 2
-  app_global_put
-
-  // Return NumAccounts
-  byte 0x151f7c75
-  swap
-  itob
-  substring 7 8
-  concat
-  concat
-  log
-
   int 1
   return
 
-method_add_signature:
+// Scratch Slots:
+//  0: Counter
+//  1: Number of byte[] in byte[][]
+//  2: Start of current byte[]
+//  3: Size of current byte[]
+method_set_signatures:
   txn OnCompletion
   int NoOp
   ==
+  txn OnCompletion
+  int OptIn
+  ==
+  ||
   assert
 
   txn ApplicationID
   assert
 
-  txn Sender
-  global CreatorAddress
-  ==
+  callsub sub_is_sender_in_multisig
   assert
 
-  // Store signature against account key in global state
+  // process byte[][]
   txna ApplicationArgs 1
-  btoi
-  txnas Accounts
-  txna ApplicationArgs 2
-  app_global_put
+  int 0
+  extract_uint16
+  store 1 // Number of arrays
 
-  // Increment NumSignatures
-  byte "NumSignatures"
+  // Starting at index 0, add each sig to an indexed kv-pair
+  int 0
+  loop_add_sig:
+  store 0
+  txn Sender
+  load 0
+  itob
+  substring 7 8
+
+  // Get start of current byte[]
+  // index * 2 + 2
+  txna ApplicationArgs 1
+  int 2
+  int 2
+  load 0
+  *
+  +
+  extract_uint16
+  store 2 // Start of byte[]
+
+  // Get size of current byte[]
+  txna ApplicationArgs 1
+  int 2
+  load 2
+  +
+  extract_uint16
+  store 3 // Size of byte[]
+
+  // Get signature from byte[]
+  txna ApplicationArgs 1
+  load 2 // Start of byte[]
+  int 4 // 2 + 2 (size of byte[][] and size of current byte[])
+  +
   dup
-  app_global_get
+  load 3 // Size of byte[]
+  +
+  substring3
+  app_local_put
+
+  // Increment counter
+  load 0
   int 1
   +
   dup
-  cover 2
-  app_global_put
 
-  // Return NumSignatures
-  byte 0x151f7c75
+  // Check for additional signatures
+  load 1
+  <
+  bnz loop_add_sig
+
+  // Clear remaining signatures
+  txn Sender
   swap
-  itob
-  substring 7 8
-  concat
-  log
+  callsub sub_clear_signatures
 
   int 1
   return
 
-method_remove_signature:
+method_clear_signatures:
   txn OnCompletion
   int NoOp
   ==
@@ -417,35 +399,13 @@ method_remove_signature:
   txn ApplicationID
   assert
 
-  txn Sender
-  global CreatorAddress
-  ==
+  callsub sub_is_sender_in_multisig
   assert
 
-  // Remove signature from account key in global state
-  txna ApplicationArgs 1
-  btoi
-  txnas Accounts
-  byte ""
-  app_global_put
-
-  // Decrement NumSignatures
-  byte "NumSignatures"
-  dup
-  app_global_get
-  int 1
-  -
-  dup
-  cover 2
-  app_global_put
-
-  // Return NumSignatures
-  byte 0x151f7c75
-  swap
-  itob
-  substring 7 8
-  concat
-  log
+  // Delete all 16 potential signatures
+  txn Sender
+  int 0
+  callsub sub_clear_signatures
 
   int 1
   return
@@ -500,5 +460,44 @@ sub_index_to_box:
 
   end_sub_index_to_box:
   frame_bury 0
+  retsub
+
+// Sender must have a keyed index in the multisig
+sub_is_sender_in_multisig:
+  proto 0 1
+  int 0
+  global CurrentApplicationID
+  txn Sender
+  app_global_get_ex
+  swap
+  pop
+  frame_bury 0
+  retsub
+
+// Clear signatures from Ith position to 16th position
+// Args:
+//  + Account
+//  + Ith position
+sub_clear_signatures:
+  proto 2 0
+
+  // Delete remaining signatures
+  loop_del_sig:
+  frame_dig -2
+  frame_dig -1
+  itob
+  substring 7 8
+  app_local_del
+
+  // Increment counter
+  frame_dig -1
+  int 1
+  +
+  dup
+  frame_bury -1
+  int 16
+  <
+  bnz loop_del_sig
+
   retsub
 
