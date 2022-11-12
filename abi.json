@@ -1,0 +1,80 @@
+{
+  "name": "On-Chain Msig Signer",
+  "networks": {},
+  "methods": [
+    {
+      "name": "deploy",
+      "desc": "Deploy a new On-Chain Msig Application",
+      "args": [
+        { "type": "uint8", "name": "NumAccounts", "desc": "Number of accounts" },
+        { "type": "uint8", "name": "Threshold", "desc": "Threshold for multisig" },
+        { "type": "uint8", "name": "Version", "desc": "Version" }
+      ],
+      "returns": { "type": "uint64", "desc": "Application ID" }
+    },
+    {
+      "name": "addSignature",
+      "desc": "Add signature for account",
+      "args": [
+        { "type": "account", "name": "Account", "desc": "Account of signature" },
+        { "type": "byte[]", "name": "Signature", "desc": "Signature" }
+      ],
+      "returns": { "type": "uint8", "desc": "Number of signatures" }
+    },
+    {
+      "name": "removeSignature",
+      "desc": "Remove signature for account",
+      "args": [
+        { "type": "account", "name": "Account", "desc": "Account of signature" }
+      ],
+      "returns": { "type": "uint8", "desc": "Number of signatures" }
+    },
+    {
+      "name": "addAccount",
+      "desc": "Add account to multisig",
+      "args": [
+        { "type": "uint8", "name": "Index", "desc": "Account position within multisig" },
+        { "type": "account", "name": "Account", "desc": "Account to add" }
+      ],
+      "returns": { "type": "uint8", "desc": "Number of accounts" }
+    },
+    {
+      "name": "removeAccount",
+      "desc": "Remove account from multisig",
+      "args": [
+        { "type": "uint8", "name": "Index", "desc": "Account position within multisig" },
+        { "type": "account", "name": "Account", "desc": "Account to remove" }
+      ],
+      "returns": { "type": "uint8", "desc": "Number of accounts" }
+    },
+    {
+      "name": "addTransaction",
+      "desc": "Add transaction to the app",
+      "args": [
+        { "type": "uint8", "name": "Group Index", "desc": "Transactions position within an atomic group" },
+        { "type": "byte[]", "name": "Transaction", "desc": "Transaction to add" }
+      ],
+      "returns": { "type": "uint8", "desc": "Number of transactions" }
+    },
+    {
+      "name": "removeTransaction",
+      "desc": "Remove transaction from the app",
+      "args": [
+        { "type": "uint8", "name": "Group Index", "desc": "Transactions position within an atomic group" }
+      ],
+      "returns": { "type": "uint8", "desc": "Number of transactions" }
+    },
+    {
+      "name": "destroy",
+      "desc": "Destroy the application",
+      "args": [],
+      "returns": { "type": "void" }
+    },
+    {
+      "name": "update",
+      "desc": "Update the application",
+      "args": [],
+      "returns": { "type": "void" }
+    }
+  ]
+}

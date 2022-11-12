@@ -1,0 +1,504 @@
+#pragma version 8
+
+// Deploy MsigTxnShare
+// Args:
+//  + Number of Accounts
+//  + Threshold
+//  + Version
+// Returns:
+//  + Application ID
+method "deploy(uint8,uint8,uint8)uint64"
+txna ApplicationArgs 0
+==
+bnz method_deploy
+
+// Add Signature
+// Args:
+//  + Account of signature
+//  + Signature for transaction
+// Returns:
+//  + Number of signatures
+method "addSignature(account,byte[])uint8"
+txna ApplicationArgs 0
+==
+bnz method_add_signature
+
+// Remove Signature
+// Args:
+//  + Account
+// Returns:
+//  + Number of signatures
+method "removeSignature(account)uint8"
+txna ApplicationArgs 0
+==
+bnz method_remove_signature
+
+// Args:
+//  + Multisig account index
+//  + Account to add
+// Returns:
+//  + Number of accounts
+method "addAccount(uint8,account)uint8"
+txna ApplicationArgs 0
+==
+bnz method_add_account
+
+// Args:
+//  + Multisig account index
+//  + Account to remove
+// Return:
+//  + Number of accounts
+method "removeAccount(uint8,account)uint8"
+txna ApplicationArgs 0
+==
+bnz method_remove_account
+
+// Add Transaction
+// Args:
+//  + Group index
+//  + Transaction bytes
+method "addTransaction(uint8,byte[])uint8"
+txna ApplicationArgs 0
+==
+bnz method_add_transaction
+
+// Remove Transaction
+// Args:
+//  + Group index
+method "removeTransaction(uint8)uint8"
+txna ApplicationArgs 0
+==
+bnz method_remove_transaction
+
+// Destroy
+method "destroy()void"
+txna ApplicationArgs 0
+==
+bnz method_destroy
+
+// Update
+method "update()void"
+txna ApplicationArgs 0
+==
+bnz method_update
+
+err
+
+method_deploy:
+  txn OnCompletion
+  int NoOp
+  ==
+  assert
+
+  txn ApplicationID
+  !
+  assert
+
+  // Set number of transactions to zero
+  byte "NumTransactions"
+  int 0
+  app_global_put
+
+  // Store number of accounts
+  byte "NumAccounts"
+  txna ApplicationArgs 1
+  btoi
+  app_global_put
+
+  // Set number of signatures to zero
+  byte "NumSignatures"
+  int 0
+  app_global_put
+
+  // Store threshold
+  byte "Threshold"
+  txna ApplicationArgs 2
+  btoi
+  app_global_put
+
+  // Store version
+  byte "Version"
+  txna ApplicationArgs 3
+  btoi
+  app_global_put
+
+  // Return Application ID
+  byte 0x151f7c75
+  global CurrentApplicationID
+  itob
+  concat
+  log
+
+  int 1
+  return
+
+method_destroy:
+  txn OnCompletion
+  int DeleteApplication
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  int 1
+  return
+
+method_update:
+  txn OnCompletion
+  int UpdateApplication
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  int 1
+  return
+
+method_add_transaction:
+  txn OnCompletion
+  int NoOp
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  // Delete the box if it already exists
+  txna ApplicationArgs 1
+  callsub sub_index_to_box
+  box_del
+  pop
+
+  // Create the box
+  txna ApplicationArgs 1    // 0
+  callsub sub_index_to_box  // txn0
+  txna ApplicationArgs 2    // txn0 abidata
+  int 0                     // txn0 abidata 0
+  extract_uint16            // txn0 txnlen
+  box_create                // 1
+  assert                    //
+
+  // Place the txn in the box
+  txna ApplicationArgs 1    // 0
+  callsub sub_index_to_box  // txn0
+  txna ApplicationArgs 2    // txn0 abidata
+  dup                       // txn0 abidata abidata
+  int 0                     // txn0 abidata abidata 0
+  extract_uint16            // txn0 abidata txnlen
+  int 2                     // txn0 abidata txnlen 2
+  swap                      // txn0 abidata 2 txnlen
+  int 2
+  +
+  substring3                // txn0 txndata
+  box_put                   //
+
+  // Increment NumTransactions
+  byte "NumTransactions"
+  dup
+  app_global_get
+  int 1
+  +
+  dup
+  cover 2
+  app_global_put
+
+  // Return NumTransactions
+  byte 0x151f7c75
+  swap
+  itob
+  substring 7 8
+  concat
+  log
+
+  int 1
+  return
+
+method_remove_transaction:
+  txn OnCompletion
+  int NoOp
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  // Delete the box if it exists
+  txna ApplicationArgs 1
+  callsub sub_index_to_box
+  box_del
+  pop
+
+  // Decrement NumTransactions
+  byte "NumTransactions"
+  dup
+  app_global_get
+  int 1
+  -
+  dup
+  cover 2
+  app_global_put
+
+  // Return NumTransactions
+  byte 0x151f7c75
+  swap
+  itob
+  substring 7 8
+  concat
+  log
+
+  int 1
+  return
+
+method_add_account:
+  txn OnCompletion
+  int NoOp
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  // Store account in multisig index
+  txna ApplicationArgs 1
+  txna ApplicationArgs 2
+  btoi
+  txnas Accounts
+  app_global_put
+
+  // Store account as key in global state
+  txna ApplicationArgs 2
+  btoi
+  txnas Accounts
+  byte ""
+  app_global_put
+
+  // Increment NumAccounts
+  byte "NumAccounts"
+  dup
+  app_global_get
+  int 1
+  +
+  dup
+  cover 2
+  app_global_put
+
+  // Return NumAccounts
+  byte 0x151f7c75
+  swap
+  itob
+  substring 7 8
+  concat
+  log
+
+  int 1
+  return
+
+method_remove_account:
+  txn OnCompletion
+  int NoOp
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  // Remove account from multisig index
+  txna ApplicationArgs 1
+  app_global_del
+
+  // Delete account key from global state
+  txna ApplicationArgs 2
+  btoi
+  txnas Accounts
+  app_global_del
+
+  // Decrement NumAccounts
+  byte "NumAccounts"
+  dup
+  app_global_get
+  int 1
+  -
+  dup
+  cover 2
+  app_global_put
+
+  // Return NumAccounts
+  byte 0x151f7c75
+  swap
+  itob
+  substring 7 8
+  concat
+  concat
+  log
+
+  int 1
+  return
+
+method_add_signature:
+  txn OnCompletion
+  int NoOp
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  // Store signature against account key in global state
+  txna ApplicationArgs 1
+  btoi
+  txnas Accounts
+  txna ApplicationArgs 2
+  app_global_put
+
+  // Increment NumSignatures
+  byte "NumSignatures"
+  dup
+  app_global_get
+  int 1
+  +
+  dup
+  cover 2
+  app_global_put
+
+  // Return NumSignatures
+  byte 0x151f7c75
+  swap
+  itob
+  substring 7 8
+  concat
+  log
+
+  int 1
+  return
+
+method_remove_signature:
+  txn OnCompletion
+  int NoOp
+  ==
+  assert
+
+  txn ApplicationID
+  assert
+
+  txn Sender
+  global CreatorAddress
+  ==
+  assert
+
+  // Remove signature from account key in global state
+  txna ApplicationArgs 1
+  btoi
+  txnas Accounts
+  byte ""
+  app_global_put
+
+  // Decrement NumSignatures
+  byte "NumSignatures"
+  dup
+  app_global_get
+  int 1
+  -
+  dup
+  cover 2
+  app_global_put
+
+  // Return NumSignatures
+  byte 0x151f7c75
+  swap
+  itob
+  substring 7 8
+  concat
+  log
+
+  int 1
+  return
+
+// Args:
+//  + byte value (0x00 - 0x0f)
+// Returns:
+//  + byte value representing numbers (0 - 15)
+sub_index_to_box:
+  proto 1 1
+  byte "txn"
+
+  // Convert to uint
+  frame_dig -1
+  btoi
+  frame_bury -1
+
+  // Only allow values 0x00 to 0x0f (0-15)
+  frame_dig -1
+  int 16
+  <
+  assert
+
+  // If larger than 9 we need to produce two digits
+  frame_dig -1
+  int 9
+  >
+  bnz sub_index_to_box_two_digits
+  
+  // Return single digit
+  frame_dig 0
+  frame_dig -1
+  int 48
+  +
+  itob
+  substring 7 8
+  concat
+  b end_sub_index_to_box
+
+  sub_index_to_box_two_digits:
+  frame_dig 0
+  byte "1"
+  frame_dig -1
+  int 10
+  %
+  int 48
+  +
+  itob
+  substring 7 8
+  concat
+  concat
+
+  end_sub_index_to_box:
+  frame_bury 0
+  retsub
+
