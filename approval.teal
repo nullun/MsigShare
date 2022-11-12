@@ -394,6 +394,10 @@ method_clear_signatures:
   txn OnCompletion
   int NoOp
   ==
+  txn OnCompletion
+  int CloseOut
+  ==
+  ||
   assert
 
   txn ApplicationID
