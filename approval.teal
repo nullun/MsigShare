@@ -133,6 +133,19 @@ method_destroy:
   ==
   assert
 
+  itxn_begin
+
+  int pay
+  itxn_field TypeEnum
+
+  global CreatorAddress
+  itxn_field Receiver
+
+  global CreatorAddress
+  itxn_field CloseRemainderTo
+
+  itxn_submit
+
   int 1
   return
 
