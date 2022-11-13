@@ -60,6 +60,14 @@
       "returns": { "type": "void" }
     },
     {
+      "name": "setThreshold",
+      "desc": "Update the multisig threshold",
+      "args": [
+        { "type": "uint8", "name": "Threshold", "desc": "New multisignature threshold" }
+      ],
+      "returns": { "type": "void" }
+    },
+    {
       "name": "destroy",
       "desc": "Destroy the application",
       "args": [],
