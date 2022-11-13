@@ -38,7 +38,7 @@
       "name": "removeAccount",
       "desc": "Remove account from multisig",
       "args": [
-        { "type": "account", "name": "Account", "desc": "Account to remove" }
+        { "type": "uint8", "name": "Index", "desc": "Account position within multisig to remove" }
       ],
       "returns": { "type": "void" }
     },
