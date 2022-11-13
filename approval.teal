@@ -35,10 +35,10 @@ txna ApplicationArgs 0
 ==
 bnz method_add_account
 
-// Remove Account
+// Remove Account By Index
 // Args:
-//  + account: Account to remove
-method "removeAccount(account)void"
+//  + uint8: Multisig account index
+method "removeAccount(uint8)void"
 txna ApplicationArgs 0
 ==
 bnz method_remove_account
@@ -284,12 +284,22 @@ method_add_account:
   ==
   assert
 
-  // Store account key with multisig index value
+  // Store multisig index as key with account as value
+  txna ApplicationArgs 1
   txna ApplicationArgs 2
   btoi
   txnas Accounts
-  txna ApplicationArgs 1
+  app_global_put
+
+  // Store account as key and counter as value, this is
+  // for ease of authentication, and tracking removal
+  txna ApplicationArgs 2
   btoi
+  txnas Accounts
+  dup
+  app_global_get
+  int 1
+  +
   app_global_put
 
   int 1
@@ -309,12 +319,27 @@ method_remove_account:
   ==
   assert
 
-  // Delete account and multisig index
-  txna ApplicationArgs 1
-  btoi
-  txnas Accounts
-  app_global_del
+  // Delete account by multisig index
+  txna ApplicationArgs 1  // arg1
+  dup                     // arg1 arg1
+  app_global_get          // arg1 addr
+  swap                    // addr arg1
+  app_global_del          // addr
 
+  // Decrement account counter, or delete if no longer used
+  dup                     // addr addr
+  app_global_get          // addr counter
+  int 1                   // addr counter 1
+  -                       // addr counter-1
+  dup                     // addr counter-1 counter-1
+  bnz keep_addr           // addr counter-1
+  pop                     // addr
+  app_global_del          //
+  b end_remove_account
+  keep_addr:              // addr counter-1
+  app_global_put          //
+
+  end_remove_account:
   int 1
   return
 
