@@ -6,28 +6,24 @@
       "name": "deploy",
       "desc": "Deploy a new On-Chain Msig Application",
       "args": [
-        { "type": "uint8", "name": "NumAccounts", "desc": "Number of accounts" },
-        { "type": "uint8", "name": "Threshold", "desc": "Threshold for multisig" },
-        { "type": "uint8", "name": "Version", "desc": "Version" }
+        { "type": "uint8", "name": "VersionMajor", "desc": "Major version number" },
+        { "type": "uint8", "name": "VersionMinor", "desc": "Minor version number" }
       ],
       "returns": { "type": "uint64", "desc": "Application ID" }
     },
     {
-      "name": "addSignature",
-      "desc": "Add signature for account",
+      "name": "setSignatures",
+      "desc": "Set signatures for account",
       "args": [
-        { "type": "account", "name": "Account", "desc": "Account of signature" },
-        { "type": "byte[]", "name": "Signature", "desc": "Signature" }
+        { "type": "byte[][]", "name": "Signatures", "desc": "Array of signatures" }
       ],
-      "returns": { "type": "uint8", "desc": "Number of signatures" }
+      "returns": { "type": "void" }
     },
     {
-      "name": "removeSignature",
-      "desc": "Remove signature for account",
-      "args": [
-        { "type": "account", "name": "Account", "desc": "Account of signature" }
-      ],
-      "returns": { "type": "uint8", "desc": "Number of signatures" }
+      "name": "clearSignatures",
+      "desc": "Clear signatures for account",
+      "args": [],
+      "returns": { "type": "void" }
     },
     {
       "name": "addAccount",
@@ -36,16 +32,15 @@
         { "type": "uint8", "name": "Index", "desc": "Account position within multisig" },
         { "type": "account", "name": "Account", "desc": "Account to add" }
       ],
-      "returns": { "type": "uint8", "desc": "Number of accounts" }
+      "returns": { "type": "void" }
     },
     {
       "name": "removeAccount",
       "desc": "Remove account from multisig",
       "args": [
-        { "type": "uint8", "name": "Index", "desc": "Account position within multisig" },
         { "type": "account", "name": "Account", "desc": "Account to remove" }
       ],
-      "returns": { "type": "uint8", "desc": "Number of accounts" }
+      "returns": { "type": "void" }
     },
     {
       "name": "addTransaction",
@@ -54,7 +49,7 @@
         { "type": "uint8", "name": "Group Index", "desc": "Transactions position within an atomic group" },
         { "type": "byte[]", "name": "Transaction", "desc": "Transaction to add" }
       ],
-      "returns": { "type": "uint8", "desc": "Number of transactions" }
+      "returns": { "type": "void" }
     },
     {
       "name": "removeTransaction",
@@ -62,7 +57,7 @@
       "args": [
         { "type": "uint8", "name": "Group Index", "desc": "Transactions position within an atomic group" }
       ],
-      "returns": { "type": "uint8", "desc": "Number of transactions" }
+      "returns": { "type": "void" }
     },
     {
       "name": "destroy",
@@ -73,7 +68,10 @@
     {
       "name": "update",
       "desc": "Update the application",
-      "args": [],
+      "args": [
+        { "type": "uint8", "name": "VersionMajor", "desc": "Major version number" },
+        { "type": "uint8", "name": "VersionMinor", "desc": "Minor version number" }
+      ],
       "returns": { "type": "void" }
     }
   ]
