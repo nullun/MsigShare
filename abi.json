@@ -4,16 +4,16 @@
   "methods": [
     {
       "name": "deploy",
-      "desc": "Deploy a new On-Chain Msig Application",
+      "desc": "Deploy a new On-Chain Msig Signer Application",
       "args": [
         { "type": "uint8", "name": "VersionMajor", "desc": "Major version number" },
         { "type": "uint8", "name": "VersionMinor", "desc": "Minor version number" }
       ],
-      "returns": { "type": "uint64", "desc": "Application ID" }
+      "returns": { "type": "uint64", "desc": "Msig Signer Application ID" }
     },
     {
       "name": "setSignatures",
-      "desc": "Set signatures for account",
+      "desc": "Set signatures for account. Signatures must be included as an array of byte-arrays",
       "args": [
         { "type": "byte[][]", "name": "Signatures", "desc": "Array of signatures" }
       ],
@@ -21,7 +21,7 @@
     },
     {
       "name": "clearSignatures",
-      "desc": "Clear signatures for account",
+      "desc": "Clear signatures for account. Be aware this only removes it from your local state, and indexers will still know and could use your signatures",
       "args": [],
       "returns": { "type": "void" }
     },
@@ -29,7 +29,7 @@
       "name": "addAccount",
       "desc": "Add account to multisig",
       "args": [
-        { "type": "uint8", "name": "Index", "desc": "Account position within multisig" },
+        { "type": "uint8", "name": "Account Index", "desc": "Account position within multisig" },
         { "type": "account", "name": "Account", "desc": "Account to add" }
       ],
       "returns": { "type": "void" }
@@ -38,13 +38,13 @@
       "name": "removeAccount",
       "desc": "Remove account from multisig",
       "args": [
-        { "type": "uint8", "name": "Index", "desc": "Account position within multisig to remove" }
+        { "type": "uint8", "name": "Account Index", "desc": "Account position within multisig to remove" }
       ],
       "returns": { "type": "void" }
     },
     {
       "name": "addTransaction",
-      "desc": "Add transaction to the app",
+      "desc": "Add transaction to the app. Only one transaction should be included per call",
       "args": [
         { "type": "uint8", "name": "Group Index", "desc": "Transactions position within an atomic group" },
         { "type": "byte[]", "name": "Transaction", "desc": "Transaction to add" }
@@ -53,7 +53,7 @@
     },
     {
       "name": "removeTransaction",
-      "desc": "Remove transaction from the app",
+      "desc": "Remove transaction from the app. Unlike signatures which will remove all previous signatures when a new one is added, you must clear all previously transactions if you want to reuse the same app",
       "args": [
         { "type": "uint8", "name": "Group Index", "desc": "Transactions position within an atomic group" }
       ],
@@ -69,7 +69,7 @@
     },
     {
       "name": "destroy",
-      "desc": "Destroy the application",
+      "desc": "Destroy the application and return funds to creator address. All transactions must be removed before calling destroy",
       "args": [],
       "returns": { "type": "void" }
     },
@@ -77,8 +77,8 @@
       "name": "update",
       "desc": "Update the application",
       "args": [
-        { "type": "uint8", "name": "VersionMajor", "desc": "Major version number" },
-        { "type": "uint8", "name": "VersionMinor", "desc": "Minor version number" }
+        { "type": "uint8", "name": "VersionMajor", "desc": "New major version number" },
+        { "type": "uint8", "name": "VersionMinor", "desc": "New minor version number" }
       ],
       "returns": { "type": "void" }
     }
