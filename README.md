@@ -1,0 +1,1 @@
+Please don't use this repository. Checkout [ARC-55](https://github.com/algorandfoundation/ARCs/blob/main/ARCs/arc-0055.md) and the [arc55-msig-app](https://github.com/nullun/arc55-msig-app) reference implementation instead.
